@@ -258,4 +258,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+*.dockerignore/*
+*.mvn/*
+
 # End of https://www.toptal.com/developers/gitignore/api/eclipse,visualstudiocode,maven,macos,intellij,windows,linux
