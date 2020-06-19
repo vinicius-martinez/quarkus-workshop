@@ -4,6 +4,8 @@
 
 Esse *workshop* tem o objetivo de ilustrar algumas capacidades do [Quarkus](https://quarkus.io/). A *stack* para desenvolvimento Java para aplicações *Cloud Native* e *Serverless*.
 
+Para maiores informações, por favor consulte a seção [Referências Adicionais](#additional-references).
+
 ## Ambiente
 
 - [JDK/Open JDK 1.8 (no mínimo)](https://openjdk.java.net/install/)
