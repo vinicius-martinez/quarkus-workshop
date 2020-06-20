@@ -586,7 +586,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 
     public String primeiroNome;
     public Integer rg;
-  	public String sobreNome;
+    public String sobreNome;
 
   	public static List<Customer> findByPrimeiroNome(Customer customer){
   		List<Customer> customerList = list("primeiroNome",  customer.getPrimeiroNome());
