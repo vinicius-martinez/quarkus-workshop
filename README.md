@@ -21,7 +21,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 0. [Criação de um Projeto Quarkus](#execute-step-0)
 1. [Execução do Projeto](#execute-step-1)
 2. [Geração do Pacote](#execute-step-2)
-3. [Compilações Nativas](#execute-step-3)
+3. [Compilações Quarkus](#execute-step-3)
 
 ### 0 - Criação de um Projeto Quarkus <a name="execute-step-0">
 
@@ -87,7 +87,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   ```
   java -jar target/quarkus-getting-started-1.0.0-SNAPSHOT-runner.jar
   ```
-* Verifique o tamanho do arquivo *jar* gerado e quantidade de memória utilizada:
+* Verifique o tamanho do arquivo *jar* gerado,  quantidade de memória utilizada e tempo de *bootstrap*:
   ```
   du -sh ./target/*runner.jar  ./target/lib
   ps -o pid,rss,command -p <pid>
@@ -95,7 +95,52 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   * arquivo *"-runner.jar"* consiste no *jar* executável. Necessária a presença do diretório */lib*. Maiores detalhes nesse [LINK](https://quarkus.io/guides/getting-started#packaging-and-run-the-application)
   * caso necessite criar um *uber-jar*, basta adicionar as seguintes properties no arquivo *application.properties*. Maiores detalhes nesses links: [MAVEN](https://quarkus.io/guides/maven-tooling#uber-jar-maven) [GRADLE](https://quarkus.io/guides/gradle-tooling#building-uber-jars)
 
-### 3 - Compilações Nativas <a name="execute-step-3">
+### 3 - Compilações Quarkus <a name="execute-step-3">
+
+* Maiores detalhes sobre esses processos estão disponíveis nesses links: [Native Image](https://quarkus.io/guides/building-native-image) [Container Image](https://quarkus.io/guides/container-image)
+
+* Geração de uma imagem Docker com binário tradicional
+
+  ```
+  docker build -f src/main/docker/Dockerfile.jvm -t getting-started-jvm .
+  docker images | grep 'quarkus-quickstart'
+  ```
+
+* Geração de uma imagem Docker com binário compilado nativamente (macOS)
+
+  ```
+  ./mvnw package -Pnative -DskipTests
+  file <file>
+  ./target/<file>
+  docker build -f src/main/docker/Dockerfile.native -t getting-started-native .
+  docker images | grep 'getting-started-native'
+  ```
+
+* Geração de uma imagem Docker com binário compilado nativamente (Linux)
+
+  ```
+  ./mvnw package -Pnative -Dquarkus.native.container-build=true -DskipTests
+  docker build -f src/main/docker/Dockerfile.native -t getting-started-native-linux .
+  docker images | grep 'getting-started-native-linux'
+  ```
+
+* Execução das imagens:
+  ```
+  docker run -it -p 8080:8080 getting-started-jvm
+  docker run -it -p 8180:8080 getting-started-native
+  docker run -it -p 8280:8080 getting-started-native-linux
+  ```
+
+* Monitoramento dos Containers
+  ```
+  docker stats
+  ```
+
+* Execução Benchmarks de Performance
+  ```
+  ab -n 50000 -c 10 http://localhost:8080/hello
+  ab -n 50000 -c 10 http://localhost:8280/hello
+  ```
 
 
 ## Referências Adicionais <a name="additional-references">
