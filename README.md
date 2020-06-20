@@ -221,9 +221,9 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 
   public class Customer {
 
-  public String primeiroNome;
-  public Long rg;
-  public String sobreNome;
+    public String primeiroNome;
+    public Long rg;
+    public String sobreNome;
 
 
 	public String getPrimeiroNome() {
