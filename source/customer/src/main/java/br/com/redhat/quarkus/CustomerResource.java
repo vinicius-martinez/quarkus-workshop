@@ -28,7 +28,7 @@ public class CustomerResource {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{rg}")
+    @Path("/rg/{rg}")
     public Customer getCustomer(@PathParam("rg") Long rg){
         Customer customerEntity = new Customer();
         customerEntity.setRg(rg);
@@ -55,7 +55,7 @@ public class CustomerResource {
     @DELETE
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/{rg}")
+    @Path("/rg/{rg}")
     public Customer deleteCustomer(@PathParam("rg") Long rg){
         Customer customerEntity = new Customer();
         customerEntity.setRg(rg);

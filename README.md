@@ -26,6 +26,12 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 5. [Adicionar suporte a JSON-B](#execute-step-5)
 6. [Criação da Camada de Service - Dependency Injection](#execute-step-6)
 7. [Adicionar suporte a OpenAPI/Swagger](#execute-step-7)
+8. [Inclusão Persistência - Hibernate Panache](#execute-step-8)
+9. [Inclusão BuscaCEP - MicroProfile Rest Client](#execute-step-9)
+10. [Inclusão Monitoramento - MicroProfile Metrics](#execute-step-10)
+11. [Implementar Tolerância Falha - MicroProfile Fault Tolerance](#execute-step-11)
+12. [Segurança - Keycloak/OAuth/OIDC/JWT](#execute-step-12)
+13. [Implementar APM - OpenTracing](#execute-step-13)
 
 ### 0 - Criação de um Projeto Quarkus <a name="execute-step-0">
 
@@ -409,7 +415,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
       @GET
       @Consumes(MediaType.APPLICATION_JSON)
       @Produces(MediaType.APPLICATION_JSON)
-      @Path("/{rg}")
+      @Path("/rg/{rg}")
       public Customer getCustomer(@PathParam("rg") Long rg){
           Customer customerEntity = new Customer();
           customerEntity.setRg(rg);
@@ -436,7 +442,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
       @DELETE
       @Consumes(MediaType.APPLICATION_JSON)
       @Produces(MediaType.APPLICATION_JSON)
-      @Path("/{rg}")
+      @Path("/rg/{rg}")
       public Customer deleteCustomer(@PathParam("rg") Long rg){
           Customer customerEntity = new Customer();
           customerEntity.setRg(rg);
@@ -445,6 +451,21 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
       }
 
   }
+  ```
+
+* Execução de Testes da *RestFull API* **CustomerResource**:
+
+  ```
+  http :8080/customers
+  http POST :8080/customers rg=11111 primeiroNome=nome1 sobreNome=sobrenome1
+  http POST :8080/customers rg=22222 primeiroNome=nome2 sobreNome=sobrenome2
+  http :8080/customers/rg/11111
+  http :8080/customers/rg/22222
+  http PUT :8080/customers rg=11111 primeiroNome=nome1Editado sobreNome=sobrenome1Editado
+  http :8080/customers/rg/11111
+  http :8080/customers
+  http DELETE :8080/customers/rg/11111
+  http :8080/customers
   ```
 
 ### 7 - Adicionar suporte a OpenAPI/Swagger <a name="execute-step-7">
@@ -456,6 +477,91 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   ```
   Quarkus: Add extensions to current project
   SmallRye OpenAPI
+  ```
+
+* Habilitar *Swagger UI* em ambiente *produtivo*:
+
+  ```
+  application.properties
+  quarkus.swagger-ui.always-include = true
+  ```
+
+* Acessar *Swagger UI* ou *OpenAPI Endpoint*:
+
+  ```
+  http://localhost:8080/swagger-ui/
+  http :8080/openapi
+  ```
+
+* Criação da classe **CustomerAPIApplication**
+
+  ```
+  import org.eclipse.microprofile.openapi.annotations.OpenAPIDefinition;
+  import org.eclipse.microprofile.openapi.annotations.info.Contact;
+  import org.eclipse.microprofile.openapi.annotations.info.Info;
+  import org.eclipse.microprofile.openapi.annotations.info.License;
+  import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
+  @OpenAPIDefinition(
+      tags = {
+          @Tag(name="customers", description="API de Gerenciamento de Customers"),
+      },
+      info = @Info(
+          title="Customers API",
+          version = "1.0.0",
+          contact = @Contact(
+              name = "Customers API Support",
+              url = "http://customersapi.com/contact",
+              email = "customersapi@customersapi.com"),
+          license = @License(
+              name = "Apache 2.0",
+              url = "http://www.apache.org/licenses/LICENSE-2.0.html"))
+  )
+  public class CustomerAPIApplication extends Application{
+
+  }
+  ```
+
+* Acessar *Swagger UI* ou *OpenAPI Endpoint*:
+
+  ```
+  http://localhost:8080/swagger-ui/
+  http :8080/openapi
+  ```
+
+### 8 - Inclusão Persistência - Hibernate Panache <a name="execute-step-8">
+
+* Maiores detalhes em na documentação [Hibernate Panache]https://quarkus.io/guides/hibernate-orm-panache)
+
+* Incluir *extensions* **Hibernate ORM with Panache** e  **JDBC Driver PostgreSQL**:
+
+  ```
+  Quarkus: Add extensions to current project
+  Hibernate ORM with Panache
+  JDBC Driver - PostgreSQL
+  ```
+
+* Habilitar *Swagger UI* em ambiente *produtivo*:
+
+  ```
+  application.properties
+  quarkus.swagger-ui.always-include = true
+  ```
+
+* Acessar *Swagger UI*:
+
+  ```
+  http://localhost:8080/swagger-ui/
+  ```
+
+* Maiores detalhes em na documentação [Hibernate Panache](https://quarkus.io/guides/hibernate-orm-panache)
+
+* Incluir *extension* **Hibernate ORM with Panache**:
+
+  ```
+  Quarkus: Add extensions to current project
+  Hibernate ORM with Panache
+  JDBC Driver - PostgreSQL
   ```
 
 * Habilitar *Swagger UI* em ambiente *produtivo*:
