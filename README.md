@@ -224,6 +224,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
     public String primeiroNome;
     public Long rg;
     public String sobreNome;
+    
 
   	public String getPrimeiroNome() {
   		return primeiroNome;
