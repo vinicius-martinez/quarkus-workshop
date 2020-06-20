@@ -1,6 +1,6 @@
 package br.com.redhat.quarkus;
 
-import java.util.Set;
+import java.util.List;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -21,19 +21,54 @@ public class CustomerResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Set<Customer> listCustomer(){
+    public List<Customer> listCustomer(){
         return customerService.listCustomer();
     }
 
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    public Customer getCustomerById(@PathParam("id") Long id){
+        Customer customerEntity = new Customer();
+        customerEntity.id = id;
+        customerEntity = customerService.getCustomerById(customerEntity);
+        return customerEntity;
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/rg/{rg}")
-    public Customer getCustomer(@PathParam("rg") Long rg){
+    public Customer getCustomer(@PathParam("rg") Integer rg){
         Customer customerEntity = new Customer();
         customerEntity.setRg(rg);
-        customerEntity = customerService.getCustomer(customerEntity);
+        customerEntity = customerService.getCustomerByRg(customerEntity);
         return customerEntity;
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/primeiroNome/{primeiroNome}")
+    public List<Customer> getCustomerByName(@PathParam("primeiroNome") String name){
+        Customer customerEntity = new Customer();
+        customerEntity.setPrimeiroNome(name);
+        List<Customer> customers = customerService.getByPrimeiroNome(customerEntity);
+        return customers;
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/primeiroNome/{primeiroNome}/sobreNome/{sobreNome}")
+    public List<Customer> getCustomerByNameOrLastName(@PathParam("primeiroNome") String primeiroNome,
+                                                        @PathParam("sobreNome") String sobreNome){
+        Customer customerEntity = new Customer();
+        customerEntity.setPrimeiroNome(primeiroNome);
+        customerEntity.setSobreNome(sobreNome);
+        List<Customer> customers = customerService.getByPrimeiroNomeOrSobreNome(customerEntity);
+        return customers;
     }
 
     @POST
@@ -56,9 +91,10 @@ public class CustomerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/rg/{rg}")
-    public Customer deleteCustomer(@PathParam("rg") Long rg){
+    public Customer deleteCustomerByRg(@PathParam("rg") Integer rg){
         Customer customerEntity = new Customer();
         customerEntity.setRg(rg);
+        customerEntity = customerService.getCustomerByRg(customerEntity);
         customerEntity = customerService.deleteCustomer(customerEntity);
         return customerEntity;
     }

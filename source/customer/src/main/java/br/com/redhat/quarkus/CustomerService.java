@@ -1,62 +1,65 @@
 package br.com.redhat.quarkus;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import javax.enterprise.context.ApplicationScoped;
+import javax.transaction.Transactional;
 
 @ApplicationScoped
 public class CustomerService {
 
-    private Set<Customer> customerSet = new HashSet<Customer>(0);
-
+    @Transactional
     public Customer addCustomer(Customer customer){
-        if (customerSet.contains(customer)){
-            for (Customer customerEntity : customerSet) {
-                if (customerEntity.equals(customer)){
-                    return customerEntity;
-                }
-            }
-        }
-        customerSet.add(customer);
+        Customer.persist(customer);
         return customer;
     }
 
-    public Customer getCustomer(Customer customer){
-        if (customerSet.contains(customer)){
-            for (Customer customerEntity : customerSet) {
-                if (customerEntity.equals(customer)){
-                    return customerEntity;
-                }
-            }
-        }
-		return null;
+    @Transactional
+    public Customer getCustomerById(Customer customer){
+        customer = Customer.findById(customer.id);    
+		return customer;
     }
 
-    public Set<Customer> listCustomer(){
-        return customerSet;
+    @Transactional
+    public List<Customer> getByPrimeiroNome(Customer customer){
+        List<Customer> cList = Customer.findByPrimeiroNome(customer);
+        return cList;
     }
 
+    @Transactional
+    public List<Customer> getByPrimeiroNomeOrSobreNome(Customer customer){
+        List<Customer> cList = Customer.findByPrimeiroOrSobreNome(customer);
+        return cList;
+    }
+
+    @Transactional
+    public Customer getCustomerByRg(Customer customer){
+        customer = Customer.findByRg(customer);    
+		return customer;
+    }
+
+    @Transactional
+    public List<Customer> listCustomer(){
+        List<Customer> cList = Customer.listAll();
+        return cList;
+    }
+
+    @Transactional
     public Customer deleteCustomer(Customer customer){
-        if (customerSet.contains(customer)){
-            customerSet.remove(customer);
-            return customer;
-        }
-        return null;
+        customer = Customer.findById(customer.id);
+        Customer.deleteById(customer.id);
+        return customer;
     }
 
+    @Transactional
     public Customer updateCustomer(Customer customer){
-        if (customerSet.contains(customer)){
-            for (Customer customerEntity : customerSet) {
-                if (customerEntity.equals(customer)){
-                    customerEntity.setRg(customerEntity.getRg());
-                    customerEntity.setPrimeiroNome(customer.getPrimeiroNome());
-                    customerEntity.setSobreNome(customer.getSobreNome());
-                    return customerEntity;
-                }
-            }
+        Customer customerEntity = Customer.findById(customer.id);
+        if (customerEntity != null){
+            customerEntity.setPrimeiroNome(customer.getPrimeiroNome());
+            customerEntity.setSobreNome(customer.getSobreNome());
+            customerEntity.setRg(customer.getRg());
         }
-        return null;
+        return customerEntity;
     }
     
 }

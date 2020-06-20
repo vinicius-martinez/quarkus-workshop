@@ -33,6 +33,12 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 12. [Segurança - Keycloak/OAuth/OIDC/JWT](#execute-step-12)
 13. [Implementar APM - OpenTracing](#execute-step-13)
 
+## Demonstrações - How To
+
+0. [Quarkus para Desenvolvedores Spring Boot](#execute-howto-0)
+1. [Integração com Kafka](#execute-howto-1)
+2. [Quarkus & Camel](#execute-howto-2)
+
 ### 0 - Criação de um Projeto Quarkus <a name="execute-step-0">
 
 * Criação de um projeto básico com o *VSCode* e seu respectivo plugin para *Quarkus*
@@ -228,7 +234,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   public class Customer {
 
     public String primeiroNome;
-    public Long rg;
+    public Integer rg;
     public String sobreNome;
 
 
@@ -238,10 +244,10 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 	public void setPrimeiroNome(String primeiroNome) {
 		this.primeiroNome = primeiroNome;
 	}
-	public Long getRg() {
+	public Integer getRg() {
 		return rg;
 	}
-	public void setRg(Long rg) {
+	public void setRg(Integer rg) {
 		this.rg = rg;
 	}
 	public String getSobreNome() {
@@ -289,7 +295,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
       Customer customer = new Customer();
       customer.setPrimeiroNome("nome1");
       customer.setSobreNome("sobreNome1");
-      customer.setRg(3843748L);
+      customer.setRg(101010);
       return customer;
   }
   ```
@@ -328,7 +334,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 
   {
     "primeiroNome": "nome1",
-    "rg": 3843748,
+    "rg": 101010,
     "sobreNome": "sobreNome1"
   }
   ```
@@ -416,7 +422,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
       @Consumes(MediaType.APPLICATION_JSON)
       @Produces(MediaType.APPLICATION_JSON)
       @Path("/rg/{rg}")
-      public Customer getCustomer(@PathParam("rg") Long rg){
+      public Customer getCustomer(@PathParam("rg") Integer rg){
           Customer customerEntity = new Customer();
           customerEntity.setRg(rg);
           customerEntity = customerService.getCustomer(customerEntity);
@@ -443,7 +449,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
       @Consumes(MediaType.APPLICATION_JSON)
       @Produces(MediaType.APPLICATION_JSON)
       @Path("/rg/{rg}")
-      public Customer deleteCustomer(@PathParam("rg") Long rg){
+      public Customer deleteCustomer(@PathParam("rg") Integer rg){
           Customer customerEntity = new Customer();
           customerEntity.setRg(rg);
           customerEntity = customerService.deleteCustomer(customerEntity);
@@ -531,7 +537,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 
 ### 8 - Inclusão Persistência - Hibernate Panache <a name="execute-step-8">
 
-* Maiores detalhes em na documentação [Hibernate Panache]https://quarkus.io/guides/hibernate-orm-panache)
+* Maiores detalhes em na documentação [Hibernate Panache](https://quarkus.io/guides/hibernate-orm-panache)
 
 * Incluir *extensions* **Hibernate ORM with Panache** e  **JDBC Driver PostgreSQL**:
 
@@ -556,7 +562,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 
 * Maiores detalhes em na documentação [Hibernate Panache](https://quarkus.io/guides/hibernate-orm-panache)
 
-* Incluir *extension* **Hibernate ORM with Panache**:
+* Incluir *extension* **Hibernate ORM with Panache** e **PostgreSQL JDBC Driver**:
 
   ```
   Quarkus: Add extensions to current project
@@ -564,17 +570,260 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   JDBC Driver - PostgreSQL
   ```
 
-* Habilitar *Swagger UI* em ambiente *produtivo*:
+* Inicializar Banco de Dados:
 
   ```
-  application.properties
-  quarkus.swagger-ui.always-include = true
+  docker run -e "POSTGRES_PASSWORD=postgres" -p 5432:5432 -d postgres:9.6.18-alpine
   ```
 
-* Acessar *Swagger UI*:
+  * posterior a essa etapa crie o banco de dados "customers"
+
+* Modificar classe **Customer** adicionando referências ao **Hibernate Panache**:
 
   ```
-  http://localhost:8080/swagger-ui/
+  @Entity
+  public class Customer extends PanacheEntity {
+
+    public String primeiroNome;
+    public Integer rg;
+  	public String sobreNome;
+
+  	public static List<Customer> findByPrimeiroNome(Customer customer){
+  		List<Customer> customerList = list("primeiroNome",  customer.getPrimeiroNome());
+  		return customerList;
+  	}
+
+  	public static List<Customer> findByPrimeiroOrSobreNome(Customer customer){
+  		List<Customer> customerList = list("primeiroNome = :firstName or sobreNome = :lastName",
+  										Parameters.with("firstName", customer.getPrimeiroNome())
+  											.and("lastName", customer.getSobreNome()));
+  		return customerList;
+  	}
+
+  	public static Customer findByRg(Customer customer){
+  		customer = Customer.find("rg", customer.getRg()).firstResult();
+  		return customer;
+  	}
+  	public String getPrimeiroNome() {
+  		return primeiroNome;
+  	}
+  	public void setPrimeiroNome(String primeiroNome) {
+  		this.primeiroNome = primeiroNome.toUpperCase();
+  	}
+  	public Integer getRg() {
+  		return rg;
+  	}
+  	public void setRg(Integer rg) {
+  		this.rg = rg;
+  	}
+  	public String getSobreNome() {
+  		return sobreNome;
+  	}
+  	public void setSobreNome(String sobreNome) {
+  		this.sobreNome = sobreNome.toUpperCase();
+  	}
+
+  }
+
+  ```
+
+* Modificar classe **CustomerService** adicionando referências aos métodos recém criados:
+
+  ```
+  @ApplicationScoped
+  public class CustomerService {
+
+    @Transactional
+    public Customer addCustomer(Customer customer){
+      Customer.persist(customer);
+      return customer;
+    }
+
+    @Transactional
+    public Customer getCustomerById(Customer customer){
+      customer = Customer.findById(customer.id);    
+		  return customer;
+    }
+
+    @Transactional
+    public List<Customer> getByPrimeiroNome(Customer customer){
+      List<Customer> cList = Customer.findByPrimeiroNome(customer);
+      return cList;
+    }
+
+    @Transactional
+    public List<Customer> getByPrimeiroNomeOrSobreNome(Customer customer){
+      List<Customer> cList = Customer.findByPrimeiroOrSobreNome(customer);
+      return cList;
+    }
+
+    @Transactional
+    public Customer getCustomerByRg(Customer customer){
+      customer = Customer.findByRg(customer);    
+		  return customer;
+    }
+
+    @Transactional
+    public List<Customer> listCustomer(){
+      List<Customer> cList = Customer.listAll();
+      return cList;
+    }
+
+    @Transactional
+    public Customer deleteCustomer(Customer customer){
+      customer = Customer.findById(customer.id);
+      Customer.deleteById(customer.id);
+      return customer;
+    }
+
+    @Transactional
+    public Customer updateCustomer(Customer customer){
+      Customer customerEntity = Customer.findById(customer.id);
+      if (customerEntity != null){
+          customerEntity.setPrimeiroNome(customer.getPrimeiroNome());
+          customerEntity.setSobreNome(customer.getSobreNome());
+          customerEntity.setRg(customer.getRg());
+      }
+      return customerEntity;
+    }
+
+  }
+
+  ```
+
+* Modificar classe **CustomerResource** adicionando referências aos métodos recém criados:
+
+  ```
+  @Path("/customers")
+  public class CustomerResource {
+
+    @Inject
+    CustomerService customerService;
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<Customer> listCustomer(){
+        return customerService.listCustomer();
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/{id}")
+    public Customer getCustomerById(@PathParam("id") Long id){
+        Customer customerEntity = new Customer();
+        customerEntity.id = id;
+        customerEntity = customerService.getCustomerById(customerEntity);
+        return customerEntity;
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/rg/{rg}")
+    public Customer getCustomer(@PathParam("rg") Integer rg){
+        Customer customerEntity = new Customer();
+        customerEntity.setRg(rg);
+        customerEntity = customerService.getCustomerByRg(customerEntity);
+        return customerEntity;
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/primeiroNome/{primeiroNome}")
+    public List<Customer> getCustomerByName(@PathParam("primeiroNome") String name){
+        Customer customerEntity = new Customer();
+        customerEntity.setPrimeiroNome(name);
+        List<Customer> customers = customerService.getByPrimeiroNome(customerEntity);
+        return customers;
+    }
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/primeiroNome/{primeiroNome}/sobreNome/{sobreNome}")
+    public List<Customer> getCustomerByNameOrLastName(@PathParam("primeiroNome") String primeiroNome,
+                                                        @PathParam("sobreNome") String sobreNome){
+        Customer customerEntity = new Customer();
+        customerEntity.setPrimeiroNome(primeiroNome);
+        customerEntity.setSobreNome(sobreNome);
+        List<Customer> customers = customerService.getByPrimeiroNomeOrSobreNome(customerEntity);
+        return customers;
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Customer addCustomer(Customer customer){
+        Customer customerEntity = customerService.addCustomer(customer);
+        return customerEntity;
+    }
+
+    @PUT
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Customer updatCustomer(Customer customer){
+        Customer customerEntity = customerService.updateCustomer(customer);
+        return customerEntity;
+    }
+
+    @DELETE
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/rg/{rg}")
+    public Customer deleteCustomerByRg(@PathParam("rg") Integer rg){
+        Customer customerEntity = new Customer();
+        customerEntity.setRg(rg);
+        customerEntity = customerService.getCustomerByRg(customerEntity);
+        customerEntity = customerService.deleteCustomer(customerEntity);
+        return customerEntity;
+    }
+
+  }
+
+  ```
+
+* Ajustar *application.properties*:
+
+  ```
+  quarkus.datasource.db-kind = postgresql
+
+  %dev.quarkus.datasource.username = postgresql
+  %dev.quarkus.datasource.password = postgresql
+  %dev.quarkus.datasource.jdbc.url = jdbc:postgresql://localhost:5432/customers
+  %dev.quarkus.hibernate-orm.database.generation = drop-and-create
+  ```
+
+* Iniciar aplicação e executar testes:
+
+  ```
+  http :8080/customers
+  http POST :8080/customers rg=11111 primeiroNome=nome1 sobreNome=sobrenome1
+  http POST :8080/customers rg=22222 primeiroNome=nome2 sobreNome=sobrenome2
+  http :8080/customers/rg/11111
+  http :8080/customers/rg/22222
+  http PUT :8080/customers id=1 rg=11111 primeiroNome=nome1Editado sobreNome=sobrenome1Editado
+  http :8080/customers/rg/11111
+  http :8080/customers
+  http DELETE :8080/customers/rg/11111
+  http :8080/customers
+
+  ** Testes com os novos métodos
+  http POST :8080/customers rg=33333 primeiroNome=nome3 sobreNome=sobrenome3
+  http POST :8080/customers rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
+  http :8080/customers/3
+  http :8080/customers/4
+  http POST :8080/customers rg=55555 primeiroNome=nomeigual sobreNome=sobrenome5
+  http POST :8080/customers rg=66666 primeiroNome=nomeigual sobreNome=sobrenome6
+  http :8080/customers/primeiroNome/NOMEIGUAL
+
+  http POST :8080/customers rg=77777 primeiroNome=nomeigualA sobreNome=sobrenomeA
+  http POST :8080/customers rg=88888 primeiroNome=nomeigualA sobreNome=sobrenomeB
+  http POST :8080/customers rg=99999 primeiroNome=nome99999 sobreNome=sobrenomeB
+  http :8080/customers/primeiroNome/nomeigualA/sobreNome/ahushuhahus
+  http :8080/customers/primeiroNome/ahuahuhs/sobreNome/sobrenomeB
+
   ```
 
 
