@@ -1094,20 +1094,22 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   }
   ```
 
-* Inclua as seguintes propriedades no arquivo **application.properties**:
-
-  ```
-  # Teste Fault Tolerance
-  %dev.isTestingFault = true
-  # Retry
-  %dev.isRetry = false
-  # Timeout
-  %dev.isFallBack = true
-  ```
-
 * Teste de *Retry*:
 
+  * Inclua as seguintes propriedades no arquivo **application.properties**:
+
+    ```
+    # Teste Fault Tolerance
+    %dev.isTestingFault = true
+    # Retry
+    %dev.isRetry = true
+    # Timeout
+    %dev.isFallBack = false
+    ```
+
   * Descomente a *Annotation @Retry* do método **listCustomer**
+
+
   * Inclua alguns *Customers*:
 
     ```
@@ -1166,6 +1168,41 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
         }
     ]
     ```
+
+    * Teste de *Fallback*:
+
+      * Inclua as seguintes propriedades no arquivo **application.properties**:
+
+        ```
+        # Teste Fault Tolerance
+        %dev.isTestingFault = true
+        # Retry
+        %dev.isRetry = false
+        # Timeout
+        %dev.isFallBack = true
+        ```
+
+      * Descomente a *Annotation @Fallback* e comente *@Retry* do método **listCustomer**
+
+      * Inclua alguns *Customers*:
+
+        ```
+        http POST :8080/customers rg=11111 primeiroNome=nome1 sobreNome=sobrenome1;
+        http POST :8080/customers rg=22222 primeiroNome=nome2 sobreNome=sobrenome2;
+        http POST :8080/customers rg=33333 primeiroNome=nome3 sobreNome=sobrenome3;
+        http POST :8080/customers rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
+        ```
+
+      * Faça uma chamada ao método **listCustomer()**
+
+        ```
+        http :8080/customers  
+        ```
+
+      * Verifique o retorno da invocação do *Endpoint RestFull*
+
+        ```
+
 
 ## Referências Adicionais <a name="additional-references">
 
