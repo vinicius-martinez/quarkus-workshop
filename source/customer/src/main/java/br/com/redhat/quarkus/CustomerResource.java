@@ -1,5 +1,7 @@
 package br.com.redhat.quarkus;
 
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -13,12 +15,17 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.faulttolerance.Retry;
 import org.eclipse.microprofile.metrics.MetricUnits;
 import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
+import org.jboss.logging.Logger;
 
 @Path("/customers")
 public class CustomerResource {
+
+    private static final Logger LOGGER = Logger.getLogger(CustomerResource.class);
 
     @Inject
     CustomerService customerService;
@@ -27,9 +34,26 @@ public class CustomerResource {
     @RestClient
     BuscaCEPRestClient buscaCepRestClient;
 
+    @ConfigProperty(name = "isTestingFault")
+    boolean isTestingFault;
+
+    @ConfigProperty(name = "isRetry")
+    boolean isRetry;
+    final int quantidadeRetry = 5;
+    int exceptionCount = quantidadeRetry - 1;
+    int count = 0;
+
+    @ConfigProperty(name = "isFallBack")
+    boolean isFallBack;
+
     @GET
     @Produces(MediaType.APPLICATION_JSON)
+    @Retry(maxRetries = quantidadeRetry, delay = 1, delayUnit = ChronoUnit.SECONDS)
+    //@Fallback(fallbackMethod = "fallbackCustomers")
     public List<Customer> listCustomer(){
+        if (isTestingFault){
+            executeFault();
+        }
         return customerService.listCustomer();
     }
 
@@ -111,6 +135,24 @@ public class CustomerResource {
     @Gauge(name = "QUARKUS_QUANTIDADE_CLIENTES", unit = MetricUnits.NONE, description = "QUANTIDADE DE CLIENTES")
     public long checkCustomerAmmout(){
         return customerService.listCustomer().size();
+    }
+
+    private void executeFault(){
+        if (isRetry){
+            while ( count < exceptionCount){
+                count++;
+                LOGGER.error("Simulando Erro: " + count);
+                throw new RuntimeException("Simulando Erro: " + count);
+            }
+            count = 0;
+        }
+        if (isFallBack){
+            throw new RuntimeException("Simulando Erro: ");  
+        }   
+    }
+
+    private List<Customer> fallbackCustomers(){
+        return new ArrayList<Customer>(0);
     }
 
 }

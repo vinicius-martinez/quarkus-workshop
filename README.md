@@ -32,8 +32,8 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 9. [Inclusão BuscaCEP - MicroProfile Rest Client](#execute-step-9)
 10. [Inclusão Monitoramento - MicroProfile Metrics](#execute-step-10)
 11. [Implementar Tolerância Falha - MicroProfile Fault Tolerance](#execute-step-11)
-12. [Segurança - Keycloak/OAuth/OIDC/JWT](#execute-step-12)
-13. [Implementar APM - OpenTracing](#execute-step-13)
+12. [Implementar APM - OpenTracing](#execute-step-13)
+13. [Segurança - Keycloak/OAuth/OIDC/JWT](#execute-step-12)
 
 ## Demonstrações - How To
 
@@ -1024,13 +1024,148 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   http POST :8080/customers rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
   ```
 
-* Verificar nos *Endpoints* de monitoramento a inclusão da métrica ****
+* Verificar nos *Endpoints* de monitoramento a inclusão da métrica **QUARKUS_QUANTIDADE_CLIENTES**
 
   ```
   application_br_com_redhat_quarkus_CustomerResource_QUARKUS_QUANTIDADE_CLIENTES
   http://localhost:8080/metrics
   http://localhost:9090/graph?g0.range_input=1h&g0.expr=application_br_com_redhat_quarkus_CustomerResource_QUARKUS_QUANTIDADE_CLIENTES&g0.tab=0
   ```
+
+### 11 - Implementar Tolerância Falha - MicroProfile Fault Tolerance <a name="execute-step-11">
+
+* Criação possível através do [Quarkus Fault Tolerance](https://quarkus.io/guides/microprofile-fault-tolerance)
+
+* Incluir *extension* **SmallRye Fault Tolerance**:
+
+  ```
+  Quarkus: Add extensions to current project
+  SmallRye Fault Tolerance
+  ```
+
+* Incluir as seguintes propriedades na classe **CustomerResource**:
+
+  ```
+  private static final Logger LOGGER = Logger.getLogger(CustomerResource.class);
+
+  @ConfigProperty(name = "isTestingFault")
+  boolean isTestingFault;
+
+  @ConfigProperty(name = "isRetry")
+  boolean isRetry;
+  final int quantidadeRetry = 5;
+  int exceptionCount = quantidadeRetry - 1;
+  int count = 0;
+
+  @ConfigProperty(name = "isFallBack")
+  boolean isFallBack;
+  ```
+
+* Modificar a classse **CustomerResource** adicionando os seguintes métodos:
+
+  ```
+  @GET
+  @Produces(MediaType.APPLICATION_JSON)
+  //@Retry(maxRetries = quantidadeRetry, delay = 1, delayUnit = ChronoUnit.SECONDS)
+  //@Fallback(fallbackMethod = "fallbackCustomers")
+  public List<Customer> listCustomer(){
+      if (isTestingFault){
+          executeFault();
+      }
+      return customerService.listCustomer();
+  }
+
+  private void executeFault(){
+    if (isRetry){
+        while ( count < exceptionCount){
+            count++;
+            LOGGER.error("Simulando Erro: " + count);
+            throw new RuntimeException("Simulando Erro: " + count);
+        }
+        count = 0;
+    }
+    if (isFallBack){
+        throw new RuntimeException("Simulando Erro: ");  
+    }   
+  }
+
+  private List<Customer> fallbackCustomers(){
+      return new ArrayList<Customer>(0);
+  }
+  ```
+
+* Inclua as seguintes propriedades no arquivo **application.properties**:
+
+  ```
+  # Teste Fault Tolerance
+  %dev.isTestingFault = true
+  # Retry
+  %dev.isRetry = false
+  # Timeout
+  %dev.isFallBack = true
+  ```
+
+* Teste de *Retry*:
+
+  * Descomente a *Annotation @Retry* do método **listCustomer**
+  * Inclua alguns *Customers*:
+
+    ```
+    http POST :8080/customers rg=11111 primeiroNome=nome1 sobreNome=sobrenome1;
+    http POST :8080/customers rg=22222 primeiroNome=nome2 sobreNome=sobrenome2;
+    http POST :8080/customers rg=33333 primeiroNome=nome3 sobreNome=sobrenome3;
+    http POST :8080/customers rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
+    ```
+
+  * Faça uma chamada ao método **listCustomer()**
+
+    ```
+    http :8080/customers  
+    ```
+
+  * Verifique que algumas exceções são lançadas porém é obtido um retorno após execução bem sucedida:
+
+    ```
+    2020-06-21 17:14:45,970 ERROR [br.com.red.qua.CustomerResource] (executor-thread-198) Simulando Erro: 1
+    2020-06-21 17:14:47,108 ERROR [br.com.red.qua.CustomerResource] (executor-thread-198) Simulando Erro: 2
+    2020-06-21 17:14:48,105 ERROR [br.com.red.qua.CustomerResource] (executor-thread-198) Simulando Erro: 3
+    2020-06-21 17:14:49,288 ERROR [br.com.red.qua.CustomerResource] (executor-thread-198) Simulando Erro: 4
+
+    HTTP/1.1 200 OK
+    Content-Length: 345
+    Content-Type: application/json
+
+    [
+        {
+            "id": 1,
+            "numeroCep": 21624,
+            "primeiroNome": "NOME1",
+            "rg": 11111,
+            "sobreNome": "SOBRENOME1"
+        },
+        {
+            "id": 2,
+            "numeroCep": 44109,
+            "primeiroNome": "NOME2",
+            "rg": 22222,
+            "sobreNome": "SOBRENOME2"
+        },
+        {
+            "id": 3,
+            "numeroCep": 46397,
+            "primeiroNome": "NOME3",
+            "rg": 33333,
+            "sobreNome": "SOBRENOME3"
+        },
+        {
+            "id": 4,
+            "numeroCep": 50003,
+            "primeiroNome": "NOME4",
+            "rg": 44444,
+            "sobreNome": "SOBRENOME4"
+        }
+    ]
+    ```
 
 ## Referências Adicionais <a name="additional-references">
 
