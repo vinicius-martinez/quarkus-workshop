@@ -13,11 +13,17 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.rest.client.inject.RestClient;
+
 @Path("/customers")
 public class CustomerResource {
 
     @Inject
     CustomerService customerService;
+
+    @Inject
+    @RestClient
+    BuscaCEPRestClient buscaCepRestClient;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -75,6 +81,7 @@ public class CustomerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Customer addCustomer(Customer customer){
+        customer.setNumeroCep(buscaCepRestClient.getNumeroCEP().getNumeroCep());
         Customer customerEntity = customerService.addCustomer(customer);
         return customerEntity;
     }

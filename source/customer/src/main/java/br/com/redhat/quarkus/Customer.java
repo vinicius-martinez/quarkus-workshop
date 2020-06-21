@@ -13,6 +13,7 @@ public class Customer extends PanacheEntity {
     public String primeiroNome;
     public Integer rg;
 	public String sobreNome;
+	public Integer numeroCep;
 	
 	public static List<Customer> findByPrimeiroNome(Customer customer){
 		List<Customer> customerList = list("primeiroNome",  customer.getPrimeiroNome());
@@ -46,6 +47,14 @@ public class Customer extends PanacheEntity {
 	}
 	public void setSobreNome(String sobreNome) {
 		this.sobreNome = sobreNome.toUpperCase();
+	}
+
+	public Integer getNumeroCep() {
+		return numeroCep;
+	}
+
+	public void setNumeroCep(Integer numeroCep) {
+		this.numeroCep = numeroCep;
 	}
 	  
 }

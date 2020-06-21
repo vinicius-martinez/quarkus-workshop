@@ -600,10 +600,10 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
     	return customerList;
     }
 
-  	public static Customer findByRg(Customer customer){
-  		customer = Customer.find("rg", customer.getRg()).firstResult();
-  		return customer;
-  	}
+    public static Customer findByRg(Customer customer){
+    	customer = Customer.find("rg", customer.getRg()).firstResult();
+    	return customer;
+    }
 
   	public String getPrimeiroNome() {
   		return primeiroNome;
@@ -832,6 +832,135 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 
   ```
 
+### 9 - Inclusão BuscaCEP - MicroProfile Rest Client <a name="execute-step-9">
+
+* Maiores detalhes em na documentação [Rest Client](https://quarkus.io/guides/rest-client)
+
+* Criação de um projeto básico com o *VSCode* e seu respectivo plugin para *Quarkus*:
+
+  ```
+  Cmd/Ctrl + Shift + P
+  Generate a Quarkus Project
+  Selecione a ferramenta de build de sua escolha: Maven ou Gradle
+  Informe o GAV (Group, Artifact, Version)
+  Escolha o nome do recurso (ex. buscacep)
+  Inclua a extensão: RESTEasy JSON-B
+  Selecione diretório destino do projeto gerado
+  ```
+
+* Modifique a classe **CEPResource**:
+
+  ```
+  @Path("/cep")
+  public class CEPResource {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Response getNumeroCEP() {
+        CEP  cep = new CEP();
+        cep.setNumeroCep(new Random().ints(1, 99999).findFirst().getAsInt());
+        return Response.ok(cep).build();
+    }
+
+  }
+  ```
+
+* Crie a classe **CEP**:
+
+  ```
+  public class CEP {
+
+    private Integer numeroCep;
+
+  	public Integer getNumeroCep() {
+  		return numeroCep;
+  	}
+
+  	public void setNumeroCep(Integer numeroCep) {
+  		this.numeroCep = numeroCep;
+  	}
+
+  }
+  ```
+
+* Modifique a porta padrão do **Quarkus** no arquivo *application.properties* para evitar conflito:
+
+  ```
+  %dev.quarkus.http.port = 8180
+  ```
+  * por padrão o projeto é criado utilizando JDK 11, portanto, caso sua JVM seja de uma versão inferior, por exemplo 1.8, é necessário alteração arquivo *pom.xml*:
+
+    ```
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
+    ```
+
+* Teste o serviço *Restfull* recém criado:
+
+  ```
+  http :8180/cep
+  ```
+
+* Copie/Cole a classe **CEP** no projeto *Customer*;
+
+* Adicione a extension **Quarkus Rest Client** no projeto *Customer*;
+
+* Crie uma *interface* **BuscaCEPRestClient** no projeto *Customer* com o seguinte conteúdo:
+
+  ```
+  @ApplicationScoped
+  @RegisterRestClient
+  public interface BuscaCEPRestClient {
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_JSON)
+    public CEP getNumeroCEP();
+
+  }
+  ```
+
+* Adicione um campo do tipo *Integer* na classe de domínio *Customer* e gere seus respectivos *get/set*:
+
+  ```
+  public Integer numeroCep;
+  ```
+
+* Injete a referência da *interface* **BuscaCEPRestClient** na classe *CustomerResource*:
+
+  ```
+  @Inject
+  @RestClient
+  BuscaCEPRestClient buscaCepRestClient;
+  ```
+
+* Modifique o método **addCustomer** da classe **CustomerResource** atribuindo ao atributo **numeroCEP** um valor gerado através de uma chamada remota ao *webservice restfull* **BuscaCEPRestClient**:
+
+  ```
+  @POST
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  public Customer addCustomer(Customer customer){
+    Customer customerEntity = customerService.addCustomer(customer);
+    customerEntity.setNumeroCep(buscaCepRestClient.getNumeroCEP().getNumeroCep());
+    return customerEntity;
+  }
+  ```
+
+* Modifique o arquivo **application.properties** do projeto *Customer*:
+
+  ```
+  br.com.redhat.quarkus.BuscaCEPRestClient/mp-rest/url=http://localhost:8180/cep
+  br.com.redhat.quarkus.BuscaCEPRestClient/mp-rest/scope=javax.inject.Singleton
+  ```
+
+* Adicione um novo **Customer** através de sua *API*:
+
+  ```
+  http POST :8080/customers rg=12345 primeiroNome=nome12345 sobreNome=sobrenome12345
+  http :8080/customers/rg/12345
+  ```
 
 ## Referências Adicionais <a name="additional-references">
 
