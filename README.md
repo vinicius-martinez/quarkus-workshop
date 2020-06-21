@@ -15,6 +15,8 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 - [Visual Studio Code Java Extension Pack](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-pack)
 - [Quarkus Tools for Visual Studio Code](https://marketplace.visualstudio.com/items?itemName=redhat.vscode-quarkus)
 - [HTTPie](https://httpie.org/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
 
 ## Demonstrações - Walkthrough
 
@@ -942,8 +944,8 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   @Consumes(MediaType.APPLICATION_JSON)
   @Produces(MediaType.APPLICATION_JSON)
   public Customer addCustomer(Customer customer){
-    Customer customerEntity = customerService.addCustomer(customer);
     customerEntity.setNumeroCep(buscaCepRestClient.getNumeroCEP().getNumeroCep());
+    Customer customerEntity = customerService.addCustomer(customer);
     return customerEntity;
   }
   ```
@@ -960,6 +962,74 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   ```
   http POST :8080/customers rg=12345 primeiroNome=nome12345 sobreNome=sobrenome12345
   http :8080/customers/rg/12345
+  ```
+
+### 10 - Inclusão Monitoramento - MicroProfile Metrics <a name="execute-step-10">
+
+* Maiores detalhes em na documentação [Quarkus MicroProfile Metrics](https://quarkus.io/guides/microprofile-metrics)
+
+* Incluir *extension* **SmallRye MicroProfile Metrics**:
+
+  ```
+  Quarkus: Add extensions to current project
+  MicroProfile Metrics
+  ```
+
+* Configurar e iniciar o serviço do *Prometheus*:
+
+  ```
+  prometheus.yml
+  global:
+  scrape_interval: 10s
+  evaluation_interval: 10s
+
+  rule_files:
+
+  scrape_configs:
+    - job_name: 'prometheus'
+      static_configs:
+        - targets: ['localhost:9090']
+
+    - job_name: 'quarkus'
+      static_configs:
+        - targets: ['localhost:8080']
+
+    - job_name: 'quarkus2'
+      static_configs:
+        - targets: ['localhost:8180']
+  ```
+
+* Acessar *Endpoints* de Monitoramento:
+
+  ```
+  http://localhost:8080/metrics
+  http://localhost:9090/graph
+  ```
+
+* Modificar a classe **CustomerResource** adicionando os seguintes métodos:
+
+  ```
+  @Gauge(name = "QUARKUS_QUANTIDADE_CLIENTES", unit = MetricUnits.NONE, description = "QUANTIDADE DE CLIENTES")
+  public long checkCustomerAmmout(){
+      return customerService.listCustomer().size();
+  }
+  ```
+
+* Adicionar alguns *customers*:
+
+  ```
+  http POST :8080/customers rg=11111 primeiroNome=nome1 sobreNome=sobrenome1;
+  http POST :8080/customers rg=22222 primeiroNome=nome2 sobreNome=sobrenome2;
+  http POST :8080/customers rg=33333 primeiroNome=nome3 sobreNome=sobrenome3;
+  http POST :8080/customers rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
+  ```
+
+* Verificar nos *Endpoints* de monitoramento a inclusão da métrica ****
+
+  ```
+  application_br_com_redhat_quarkus_CustomerResource_QUARKUS_QUANTIDADE_CLIENTES
+  http://localhost:8080/metrics
+  http://localhost:9090/graph?g0.range_input=1h&g0.expr=application_br_com_redhat_quarkus_CustomerResource_QUARKUS_QUANTIDADE_CLIENTES&g0.tab=0
   ```
 
 ## Referências Adicionais <a name="additional-references">

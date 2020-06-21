@@ -13,6 +13,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.metrics.MetricUnits;
+import org.eclipse.microprofile.metrics.annotation.Gauge;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 @Path("/customers")
@@ -104,6 +106,11 @@ public class CustomerResource {
         customerEntity = customerService.getCustomerByRg(customerEntity);
         customerEntity = customerService.deleteCustomer(customerEntity);
         return customerEntity;
+    }
+
+    @Gauge(name = "QUARKUS_QUANTIDADE_CLIENTES", unit = MetricUnits.NONE, description = "QUANTIDADE DE CLIENTES")
+    public long checkCustomerAmmout(){
+        return customerService.listCustomer().size();
     }
 
 }
