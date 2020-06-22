@@ -1288,11 +1288,10 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
     -d 'username=user1&password=user1&grant_type=password' | jq --raw-output '.access_token' \
   )
 
- echo $access_token
+  echo $access_token
+  ```
 
- ```
-
-* Modifique o método de *DELETE* adicionando a necessidade de uma *role: admin*
+* Modifique o método de *DELETE* adicionando a necessidade de uma *role admin*:
 
   ```
   @DELETE
