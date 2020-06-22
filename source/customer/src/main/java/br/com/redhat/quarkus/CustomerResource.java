@@ -3,6 +3,7 @@ package br.com.redhat.quarkus;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.security.RolesAllowed;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -123,6 +124,7 @@ public class CustomerResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/rg/{rg}")
+    @RolesAllowed("admin")
     public Customer deleteCustomerByRg(@PathParam("rg") Integer rg){
         Customer customerEntity = new Customer();
         customerEntity.setRg(rg);

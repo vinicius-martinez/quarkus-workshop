@@ -1241,6 +1241,122 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
   http://localhost:16686/
   ```
 
+### 13 - Segurança - Keycloak/OAuth/OIDC/JWT <a name="execute-step-13">
+
+* Maiores detalhes em na documentação [Quarkus OpenID Connect](https://quarkus.io/guides/security-openid-connect)
+
+* Inicie o serviço do **Keycloak**
+
+  ```
+  docker run -p 10080:8080 viniciusmartinez/quarkus-rhsso:1.0
+  ```
+
+* Incluir *extension* **OpenID Connect**:
+
+  ```
+  Quarkus: Add extensions to current project
+  OpenID Connect
+  ```
+
+* Adicione no arquivo **application.properties** os seguintes parâmetros:
+
+  ```  
+  %dev.quarkus.oidc.auth-server-url = http://localhost:10080/auth/realms/Quarkus
+  %dev.quarkus.oidc.client-id = customer-app
+  %dev.quarkus.oidc.credentials.secret =5ffb3490-4d7b-42ed-8cac-e6774550bc92
+  %dev.quarkus.http.auth.policy.role-policy1.roles-allowed = user,admin                      
+  %dev.quarkus.http.auth.permission.roles1.paths = /*
+  %dev.quarkus.http.auth.permission.roles1.policy = role-policy1
+  ```
+
+* Tente executar qualquer endpoint e um *HTTP 403* é esperado:
+
+  ```
+  http :8080/customers
+
+  HTTP/1.1 401 Unauthorized
+  content-length: 0
+  ```
+
+* Obtenha um *Token* com as credenciais do usuário **user1**:
+
+  ```
+  export access_token=$(\
+    curl -X POST http://localhost:10080/auth/realms/Quarkus/protocol/openid-connect/token \
+    --user customer-app:5ffb3490-4d7b-42ed-8cac-e6774550bc92 \
+    -H 'content-type: application/x-www-form-urlencoded' \
+    -d 'username=user1&password=user1&grant_type=password' | jq --raw-output '.access_token' \
+  )
+
+ echo $access_token
+
+ ```
+
+* Modifique o método de *DELETE* adicionando a necessidade de uma *role: admin*
+
+  ```
+  @DELETE
+  @Consumes(MediaType.APPLICATION_JSON)
+  @Produces(MediaType.APPLICATION_JSON)
+  @Path("/rg/{rg}")
+  @RolesAllowed("admin")
+  public Customer deleteCustomerByRg(@PathParam("rg") Integer rg){
+    Customer customerEntity = new Customer();
+    customerEntity.setRg(rg);
+    customerEntity = customerService.getCustomerByRg(customerEntity);
+    customerEntity = customerService.deleteCustomer(customerEntity);
+    return customerEntity;
+  }
+  ```
+
+* Realize uma chamada informando o *Bearer Token*
+
+  ```
+  http :8080/customers "Authorization: Bearer "$access_token
+  ```
+
+* Adicione alguns *Customers* e verifique seu estado:
+
+  ```
+  http POST :8080/customers "Authorization: Bearer "$access_token rg=11111 primeiroNome=nome1 sobreNome=sobrenome1;
+  http POST :8080/customers "Authorization: Bearer "$access_token rg=22222 primeiroNome=nome2 sobreNome=sobrenome2;
+  http POST :8080/customers "Authorization: Bearer "$access_token rg=33333 primeiroNome=nome3 sobreNome=sobrenome3;
+  http POST :8080/customers "Authorization: Bearer "$access_token rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
+
+  http :8080/customers "Authorization: Bearer "$access_token
+  ```
+
+* Tente remover qualquer *customer* recém criado. Um erro *403* é esperado:
+
+  ```
+  http DELETE :8080/customers/rg/33333 "Authorization: Bearer "$access_token
+
+  HTTP/1.1 403 Forbidden
+  Content-Length: 9
+  Content-Type: application/json
+
+  Forbidden
+  ```
+
+* Obtenha um *Token* com as credenciais do usuário **admin**:
+
+  ```
+  export access_token=$(\
+    curl -X POST http://localhost:10080/auth/realms/Quarkus/protocol/openid-connect/token \
+    --user customer-app:5ffb3490-4d7b-42ed-8cac-e6774550bc92 \
+    -H 'content-type: application/x-www-form-urlencoded' \
+    -d 'username=admin&password=admin&grant_type=password' | jq --raw-output '.access_token' \
+  )
+
+ echo $access_token
+ ```
+
+* Tente remover qualquer *customer* recém criado:
+
+  ```
+  http DELETE :8080/customers/rg/33333 "Authorization: Bearer "$access_token
+  ```
+
 ## Referências Adicionais <a name="additional-references">
 
 - [Tutoriais Hands On - developers.redhat.com](https://developers.redhat.com/courses/quarkus/)
