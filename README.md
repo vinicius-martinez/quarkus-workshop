@@ -1347,8 +1347,8 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
     -d 'username=admin&password=admin&grant_type=password' | jq --raw-output '.access_token' \
   )
 
- echo $access_token
- ```
+  echo $access_token
+  ```
 
 * Tente remover qualquer *customer* recém criado:
 
