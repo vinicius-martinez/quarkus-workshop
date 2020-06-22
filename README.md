@@ -1199,10 +1199,47 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
         http :8080/customers  
         ```
 
-      * Verifique o retorno da invocação do *Endpoint RestFull*
+      * Verifique o retorno da invocação do *Endpoint RestFull* não apresenta erro porém sem dados:
 
         ```
+        HTTP/1.1 200 OK
+        Content-Length: 2
+        Content-Type: application/json
 
+        []
+        ```
+
+### 11 - Inclusão Monitoramento - MicroProfile Metrics <a name="execute-step-10">
+
+* Maiores detalhes em na documentação [OpenTracing](https://quarkus.io/guides/opentracing)
+
+* Inicializar serviço do *Jaeger*:
+
+  ```
+  docker run -p 5775:5775/udp -p 6831:6831/udp -p 6832:6832/udp -p 5778:5778 -p 16686:16686 -p 14268:14268 jaegertracing/all-in-one:latest
+  ```
+
+* Incluir *extension* **SmallRye OpenTracing**:
+
+  ```
+  Quarkus: Add extensions to current project
+  SmallRye OpenTracing
+  ```
+
+* Inclua alguns *Customers*:
+
+  ```
+  http POST :8080/customers rg=11111 primeiroNome=nome1 sobreNome=sobrenome1;
+  http POST :8080/customers rg=22222 primeiroNome=nome2 sobreNome=sobrenome2;
+  http POST :8080/customers rg=33333 primeiroNome=nome3 sobreNome=sobrenome3;
+  http POST :8080/customers rg=44444 primeiroNome=nome4 sobreNome=sobrenome4
+  ```
+
+* Acesse a interface do *Jaeger* e verifique as rotas:
+
+  ```
+  http://localhost:16686/
+  ```
 
 ## Referências Adicionais <a name="additional-references">
 
