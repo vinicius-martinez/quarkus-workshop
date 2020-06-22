@@ -32,7 +32,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
 9. [Inclusão BuscaCEP - MicroProfile Rest Client](#execute-step-9)
 10. [Inclusão Monitoramento - MicroProfile Metrics](#execute-step-10)
 11. [Implementar Tolerância Falha - MicroProfile Fault Tolerance](#execute-step-11)
-12. [Implementar APM - OpenTracing](#execute-step-13)
+12. [Implementar APM - OpenTracing](#execute-step-12)
 13. [Segurança - Keycloak/OAuth/OIDC/JWT](#execute-step-12)
 
 ## Demonstrações - How To
@@ -1209,7 +1209,7 @@ Para maiores informações, por favor consulte a seção [Referências Adicionai
         []
         ```
 
-### 11 - Inclusão Monitoramento - MicroProfile Metrics <a name="execute-step-10">
+### 12 - Inclusão Monitoramento - MicroProfile Metrics <a name="execute-step-12">
 
 * Maiores detalhes em na documentação [OpenTracing](https://quarkus.io/guides/opentracing)
 
